@@ -1,0 +1,67 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: messenger_app
+    ports:
+      - "8000:8000"   # Laravel (php artisan serve)
+      - "5173:5173"   # Vite dev server
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/node_modules
+    depends_on:
+      - db
+    networks:
+      - messenger_net
+
+  reverb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: messenger_reverb
+    command: php artisan reverb:start --host=0.0.0.0 --port=8090
+    ports:
+      - "8090:8090"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/node_modules
+    depends_on:
+      - app
+    networks:
+      - messenger_net
+
+  db:
+    image: mysql:8.0
+    container_name: messenger_db
+    environment:
+      MYSQL_DATABASE: td_messenger
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - messenger_net
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: messenger_pma
+    restart: unless-stopped
+    ports:
+      - "8082:80" # phpMyAdmin будет доступен по порту 8082
+    environment:
+      PMA_HOST: db          # Имя сервиса базы данных из docker-compose.yml
+      PMA_PORT: 3306
+      PMA_USER: root        # Логин от MySQL
+      PMA_PASSWORD: secret  # Пароль от MySQL (должен совпадать с MYSQL_ROOT_PASSWORD)
+    depends_on:
+      - db
+    networks:
+      - messenger_net
+volumes:
+  db_data:
+
+networks:
+  messenger_net:
+    driver: bridge

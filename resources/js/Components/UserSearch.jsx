@@ -24,8 +24,13 @@ export default function UserSearch() {
     };
 
     // Функция создания чата при клике на пользователя
-    const startChat = (userId) => {
-        router.post('/rooms/direct', { user_id: userId });
+    const startChat = async (userId) => {
+        try {
+            const { data } = await axios.post('/rooms/direct', { user_id: userId });
+            router.visit(data.redirect_url);
+        } catch (error) {
+            console.error('Ошибка создания чата:', error);
+        }
     };
 
     return (

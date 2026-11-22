@@ -13,13 +13,13 @@ class Room extends Model
         'name',
     ];
 
-    public function users()
-    {
-        return $this->belongsToMany(User::class, 'room_user');
-    }
-
     public function messages()
     {
         return $this->hasMany(Message::class);
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'room_user')->withPivot('last_read_at');
     }
 }

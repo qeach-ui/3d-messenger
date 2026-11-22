@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\ChatController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -16,7 +16,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    return redirect()->route('chat.index');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -24,14 +24,22 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Поиск пользователей для чата
-    Route::get('/users/search', [ChatController::class, 'searchUsers'])->name('users.search');
-    
-    // Создание или открытие чата с конкретным пользователем
-    Route::post('/rooms/direct', [ChatController::class, 'storeDirectRoom'])->name('rooms.storeDirect');
-    
-    // Страница самого чата (куда перейдем после создания)
+    // Главная страница чатов (список комнат)
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+
+    // Страница конкретной комнаты
     Route::get('/chat/{room}', [ChatController::class, 'show'])->name('chat.show');
+
+    // Поиск пользователей для создания диалога
+    Route::get('/users/search', [ChatController::class, 'searchUsers'])->name('users.search');
+
+    // Создание или открытие приватного диалога с пользователем
+    Route::post('/rooms/direct', [ChatController::class, 'storeDirectRoom'])->name('rooms.storeDirect');
+
+    // Отправка сообщения в комнату без перезагрузки страницы (axios + Reverb)
+    Route::post('/rooms/{room}/messages', [ChatController::class, 'storeMessage'])->name('messages.store');
+
+    Route::post('/rooms/{room}/read', [ChatController::class, 'markAsRead'])->name('rooms.read');
 });
 
 require __DIR__.'/auth.php';
